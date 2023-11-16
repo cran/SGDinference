@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>SGDinference: An R Vignette</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">SGDinference: An R Vignette</h1>
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><strong>SGDinference</strong> is an R package that provides
+estimation and inference methods for large-scale mean and quantile
+regression models via stochastic (sub-)gradient descent (S-subGD)
+algorithms. The inference procedure handles cross-sectional data
+sequentially:</p>
+<ol style="list-style-type: lower-roman">
+<li>updating the parameter estimate with each incoming “new
+observation”,</li>
+<li>aggregating it as a Polyak-Ruppert average, and</li>
+<li>computing an asymptotically pivotal statistic for inference through
+random scaling.</li>
+</ol>
+<p>The methodology used in the SGDinference package is described in
+detail in the following papers:</p>
+<ul>
+<li><p>Lee, S., Liao, Y., Seo, M.H. and Shin, Y., 2022. Fast and robust
+online inference with stochastic gradient descent via random scaling. In
+<em>Proceedings of the AAAI Conference on Artificial Intelligence</em>
+(Vol. 36, No. 7, pp. 7381-7389). <a href="https://doi.org/10.1609/aaai.v36i7.20701" class="uri">https://doi.org/10.1609/aaai.v36i7.20701</a>.</p></li>
+<li><p>Lee, S., Liao, Y., Seo, M.H. and Shin, Y., 2023. Fast Inference
+for Quantile Regression with Tens of Millions of Observations.
+arXiv:2209.14502 [econ.EM] <a href="https://doi.org/10.48550/arXiv.2209.14502" class="uri">https://doi.org/10.48550/arXiv.2209.14502</a>.</p></li>
+</ul>
+<p>We begin by calling the SGDinference package.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SGDinference)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">100723</span>)</span></code></pre></div>
+</div>
+<div id="case-study-estimating-the-mincer-equation" class="section level2">
+<h2>Case Study: Estimating the Mincer Equation</h2>
+<p>To illustrate the usefulness of the package, we use a small dataset
+included in the package. Specifically, the <em>Census2000</em> dataset
+from Acemoglu and Autor (2011) consists of observations on 26,120
+nonwhite, female workers. This small dataset is constructed from
+“microwage2000_ext.dta” at <a href="https://economics.mit.edu/people/faculty/david-h-autor/data-archive" class="uri">https://economics.mit.edu/people/faculty/david-h-autor/data-archive</a>.
+Observations are dropped if hourly wages are missing or years of
+education are smaller than 6. Then, a 5 percent random sample is drawn
+to make the dataset small. The following three variables are
+included:</p>
+<ul>
+<li>ln_hrwage: log hourly wages</li>
+<li>edyrs: years of education</li>
+<li>exp: years of potential experience</li>
+</ul>
+<p>We now define the variables.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>    y <span class="ot">=</span> Census2000<span class="sc">$</span>ln_hrwage </span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  edu <span class="ot">=</span> Census2000<span class="sc">$</span>edyrs</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  exp <span class="ot">=</span> Census2000<span class="sc">$</span>exp</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a> exp2 <span class="ot">=</span> exp<span class="sc">^</span><span class="dv">2</span><span class="sc">/</span><span class="dv">100</span></span></code></pre></div>
+<p>As a benchmark, we first estimate the Mincer equation and report the
+point estimates and their 95% heteroskedasticity-robust confidence
+intervals.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>mincer <span class="ot">=</span> <span class="fu">lm</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>inference <span class="ot">=</span> lmtest<span class="sc">::</span><span class="fu">coefci</span>(mincer, <span class="at">df =</span> <span class="cn">Inf</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>                             <span class="at">vcov =</span> sandwich<span class="sc">::</span>vcovHC)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>results <span class="ot">=</span> <span class="fu">cbind</span>(mincer<span class="sc">$</span>coefficients,inference)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">colnames</span>(results)[<span class="dv">1</span>] <span class="ot">=</span> <span class="st">&quot;estimate&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">print</span>(results)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;                estimate       2.5 %      97.5 %</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; (Intercept)  0.58114741  0.52705757  0.63523726</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; edu          0.12710477  0.12329983  0.13090971</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; exp          0.03108721  0.02877637  0.03339806</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; exp2        -0.04498841 -0.05070846 -0.03926835</span></span></code></pre></div>
+<div id="estimating-the-mean-regression-model-using-sgd" class="section level3">
+<h3>Estimating the Mean Regression Model Using SGD</h3>
+<p>We now estimate the same model using SGD.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a> mincer_sgd <span class="ot">=</span> <span class="fu">sgdi_lm</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a> <span class="fu">print</span>(mincer_sgd)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Call: </span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; sgdi_lm(formula = y ~ edu + exp + exp2)</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; Coefficients: </span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt;             Coefficient    CI.Lower    CI.Upper</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; (Intercept)  0.58714627  0.51899447  0.65529806</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; edu          0.12651235  0.12290359  0.13012112</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; exp          0.03152331  0.02788511  0.03516150</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; exp2        -0.04601193 -0.05566846 -0.03635539</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; Significance Level: 95 %</span></span></code></pre></div>
+<p>It can be seen that the estimation results are similar between two
+methods. There is a different command that only computes the estimates
+but not confidence intervals.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a> mincer_sgd <span class="ot">=</span> <span class="fu">sgd_lm</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a> <span class="fu">print</span>(mincer_sgd)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; Call: </span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; sgd_lm(formula = y ~ edu + exp + exp2)</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; Coefficients: </span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;             Coefficient</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; (Intercept)  0.58621823</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; edu          0.12658176</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; exp          0.03152287</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; exp2        -0.04599148</span></span></code></pre></div>
+<p>We compare the execution times between two versions and find that
+there is not much difference in this simple example. By construction, it
+takes more time to conduct inference via <code>sgdi_lm</code>.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">library</span>(microbenchmark)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">microbenchmark</span>(<span class="fu">sgd_lm</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2),</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>                      <span class="fu">sgdi_lm</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2),</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>                      <span class="at">times=</span>100L)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">print</span>(res)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; Unit: milliseconds</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt;                           expr      min       lq      mean   median        uq</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt;   sgd_lm(y ~ edu + exp + exp2) 7.522360 7.596879  8.523681 7.682740  8.142092</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt;  sgdi_lm(y ~ edu + exp + exp2) 9.416813 9.517151 10.456420 9.626751 10.941553</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt;       max neval</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt;  15.04463   100</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt;  14.54922   100</span></span></code></pre></div>
+<p>To plot the SGD path, we first construct a SGD path for the return to
+education coefficients.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>mincer_sgd_path <span class="ot">=</span> <span class="fu">sgdi_lm</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2, <span class="at">path =</span> <span class="cn">TRUE</span>, <span class="at">path_index =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p>Then, we can plot the SGD path.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">plot</span>(mincer_sgd_path<span class="sc">$</span>path_coefficients, <span class="at">ylab=</span><span class="st">&quot;Return to Education&quot;</span>, <span class="at">xlab=</span><span class="st">&quot;Steps&quot;</span>, <span class="at">type=</span><span class="st">&quot;l&quot;</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAEgCAMAAAAjXV6yAAAC9FBMVEUAAAABAQECAgIDAwMEBAQFBQUGBgYHBwcICAgJCQkKCgoLCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMUFBQVFRUWFhYXFxcYGBgZGRkaGhobGxscHBwdHR0eHh4hISEiIiIjIyMkJCQlJSUmJiYnJycoKCgpKSkqKiorKyssLCwtLS0uLi4vLy8wMDAxMTEyMjIzMzM0NDQ1NTU2NjY3Nzc4ODg5OTk6Ojo7Ozs8PDw+Pj4/Pz9AQEBBQUFCQkJDQ0NERERFRUVGRkZHR0dISEhJSUlKSkpLS0tMTExNTU1OTk5PT09QUFBRUVFSUlJTU1NUVFRVVVVWVlZXV1dYWFhZWVlaWlpbW1tcXFxdXV1eXl5fX19gYGBhYWFiYmJjY2NkZGRlZWVmZmZnZ2doaGhpaWlqampra2tsbGxtbW1ubm5vb29wcHBxcXFycnJzc3N0dHR1dXV2dnZ3d3d4eHh5eXl6enp7e3t8fHx9fX1+fn5/f3+AgICBgYGCgoKDg4OEhISFhYWGhoaHh4eIiIiJiYmKioqLi4uMjIyNjY2Ojo6Pj4+QkJCRkZGSkpKTk5OUlJSVlZWWlpaXl5eYmJiZmZmampqbm5ucnJydnZ2enp6fn5+goKChoaGioqKjo6OkpKSlpaWmpqanp6eoqKipqamqqqqrq6usrKytra2urq6vr6+wsLCxsbGysrKzs7O0tLS1tbW2tra3t7e4uLi5ubm6urq7u7u8vLy9vb2+vr6/v7/AwMDBwcHCwsLDw8PExMTFxcXGxsbHx8fIyMjJycnKysrLy8vMzMzNzc3Ozs7Pz8/Q0NDR0dHS0tLT09PU1NTV1dXW1tbX19fY2NjZ2dna2trb29vc3Nzd3d3e3t7g4ODh4eHi4uLj4+Pk5OTl5eXm5ubn5+fo6Ojp6enq6urr6+vs7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT19fX29vb39/f4+Pj5+fn6+vr7+/v8/Pz9/f3+/v7///+ZKpwUAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAOcElEQVR4nO2de1xUVR7AzyjggKAiZgYpmdZa666bGpVbaRm+0lR8FLlKSYpm+BwYwBego6YpqUH5WrRMokJFLCm1l5ubZZrba8mytnUNMM14BHL+2Xvv3Bkezpzffc3c6+33/ePOmTnnd87l+7kzc4d77u8QijAheu+A0UFBACgIAAUBoCAAFASAggBQEAAKAkBBACgIAAUBoCAAFASAggBQEAAKAkBBACgIAAUBoCAAFASAggBQEAAKAkBBACgIAAUBoCAAFASAggBQEAAKAkBBACgIAAUBoCAAFASAggBQEAAKAkBBACgIAAUBoCAAFASAggBQEAAKAkBBACgIAAUBoCAAFASAggBQEAAKAkBBACgIAAUBoCAAFASAggBQEAAKAnALqphxV4yAnntjQNyCxgaMmCeg594YELegdiv13A3j4hL0G3lH1/0wLO4jaFC8nrthXNyCNoT3SV31NIeee2NA3IKud6Hn3hgQPA8CaCqo9rtq3fbDsDQKKvpzK2LpXaTjvhgSt6DdZFh+6Y4HyV4998aAuAX1TxAeHsefGs1xCwotFh7eCFPV3ZzbrhIGnJUr6GaH8LCqlypBMVuPXR30OCFX0FJrztmGs+utmeoE/UNVuP/oLVvQ5RkBpBUJSKpXNa6JBVH6/Z7cPWdUjutBUEMVt/nhg9c2rX9ymiN145b16RmzbIsdjo0OxxKbze5wpNtsi22LHCvzch32pMS5tuSkKYmJ02wcSx0OuyPLttxusy0SnqfYBLIcntiQt5LbPpOXt7lgRwHH1ry8vIItz/PFgp0vCg9buJdKFAvSgmaCqvbMmfREr+DgkPZBHe8aOXXm2rW2zJkJT2Vmr+PVzLDZljgc2Sn2ZZwp7oX5iUkpy3Off3r12g3cn/bcGu6PzbClZ9szHKnZDgcncIVj4XKnijROUnqK01aqzSZqS3pqAbdNTkxMGPfI+AkTJiYkJiaOS5gaFzcxbuLER+I4JvAvLVEiaFMp3eRCI0EV0x6LGLBwc+bRC7VVZ2tUdeoLZAoKnUA7uFA1bqOgxCGrj6rqyrfIf4v93CA81F9QNa5bUEWHSlUd+Rr5gojzzOmjdqrGdQvKfVRVPz5HpqCPRo0isaN4bolWNa5T0KH9p4e/oKofnyNT0PH4eDImnmfKIVXjOgXZg0j3/6rqx+fIf4vFVGgxriiI3PmNFr35EMXnQeULVY3rElSiqhc/IF9Qw4sL+MuGQzuqGtclyMjf8ALyBS0hNwVGxlzXNl/VuC5Bxv6Op0oERSfTF4bSqv7FqsZ1CTL8P7flC2qzl34SRWnR7QpGOxTuwrKRf24nlxX04lfkC+q+ml60nKPvhioYraHSRahw+mMPUdCJf5EvaFZ4Lu2dVBZ3s6pxRUHqPun9gXxBF0aPoe8FksACVeOKgq5V1Yk/UHgeVHngW3XjioKMf/1agaAz66rpV6t/UDeuKKi3ul78gHxBp0KDLtLjER3+qWpcUdDdqjrxB/IFDR7wI7etHnEPs3n9aecZTrWXy0qioKESR9cP+YLCXxIe3mT9P6guI5gEL+Cve2zz8r9sp6C0YRJH1w/5gnoKp3g090ZG45UBcwtnB0yhkCD7cImj64d8QRkdXqmjl/d0nM9o3DOV2+wgu8EjaITE0fVDvqD6x1oFdAkicbWMxm338dv46GpI0IMSR9cPJedBX+dnbWKH9ZvDb//XeQb0FhspcXT98M2Fwxwy60ANpftaT7Kxj6BRcnrVBfmChrtgtc5sR8q4h72RhH0EPSRxdP2QL2gyz6jOrWYym9d+I1wkrXs713O9eASNlji6fih9i10a3E9SWM0lz6+LR9AYiaPrh+LPoMPknJSwCezPIBML2hbcICUs73HPr4tH0FiJo+uHfEE7BBZfx/4t5pmLpS6C8/jnaXEKOvEv8gVZBUJivgACan+68orFsftcBAi3etjHSd5RvfDRBKoz9mgLIW1uTDntpYH4GfR7FfRJSNfp67bn58y8IfxTzy3MKqhTExiN7xlS5SzUTbzPcwtR0HiJo+uHTEG5ublrQ6OS16Td1JV14bBdoav0npeJaKKgCRJH1w/5b7Fpd/PnyPWxTzAa901ylRZ7ub5oYkFRzqOjKJLRuNAyZPORL778MH9060LPLURBEyWOrh8KBK0VHnK6sVoX30t4LAO9TW8xsaCp7fkboYrbs95iHJWnSktPep9rZWJBv9xDOt7akQz08iu0KSnef66ZWBClBx3Jq96VFPOl1ypR0MMSR9cPmYLST3GbN/hrXYf7Soj5/Qkiha5NkYRTa1jQIxJH1w+fCnrrV69VKAhAFGT8NBcoCAAFAegrKN18gsI6deokbMI0OYIMfqsPlS0ouQkKRjuV6CLwGf65+QSp5FyeC+tz/PO0SVr06lP0uqlX/AyapG2vPkBfQWl/07ZXH4CCAFAQgCJBGmSgMrMgTTJQiR/SZhSkTQYqEwvSJgOVKGiyqk78gXxB2mSgcgrKMKMgbTJQmViQNhmoREFTVHXiD/TKQGViQT83CBmoVGZ/EQUlqOrEH+iV/cWsgjTL/mJWQZplf3EKWmg6QVSr7C+ioMe06Mun6PtrHgW14GBjaooV/PNFXqaZGwg/H0Hnm6emWDhVk159ic5vMRTkDaegRWYUpM3aPiYWpM3aPqKgRFWd+AP5grRZ28e8guSs7XP53795qzKvIGlr+xSPHb6V5kUQa5aX2+5EQcBcYgMgX5CUtX0KSL+hgUmhmfvTAzd7buEUlDVd6n7qhnxBUtb26cP94c+R5VwptY/nFqKgWRJH1w/5n0HfSrhoGLKP0p/I+1xpf1vPLcwrqCb8VbhxD+6X1odkG1da5yUXnHkF0bkj4dudl1uTl0T1izxQvjsizXMLUdBTEkfXD/mCdvX9k23NWg5G47r0yGum/fY4IWSYl6nSJhbUxQUc80W+11y2JhYkD3ZqimwUxE5NkaVkJqh/8VF6HDfs1BTZZhQkLT2OZy60SE2RPVtBJ/7Fd+lxPKamuN+VmiJYyNedPVfi6Prho/Q4YGoKZ8JtMwtipseBU1OYWJCU9DhwagoTC5KSHgdOTeEUtMyMgqQsfgSnphCPIOMvWu+b6S9wagrxCDKdIKnTX8DUFGYVJH36C5CaQhTEyphrDHw6/YWRmsIpyGFGQRxnPpMY4z2xgChogcTR9UOBoDe6EEIH5UiJgQStMKOg7QGJ2wnNsORJiIEEfeXlPNtAyBfUazYt557MvxWOYaSmMPFKvSElgqASL9dzJGJiQX9ZJAhaqm7NkJgU/t7nJ0fGMxg+mlU7ZAyr9oE4Vu3g8aza+1fnNRIlW9DWwMwj5NzmoDWqBL0g3D3fo/MfGIR3YdW2j2TVhl3Pqm3bjVUbMjSxkVlS7yho/BbLieDOkdukSEoGDJC6jFU781lW7aS/s2ofeo1Ve18pq/b2D1m13mhyHnTp6K6DPynp4wpMKOiXN3d9R2nDf/51WItFVcwn6POu3Ntr+olu/A9RJb20wHyCRkRsP7nzmqg7Xj5wVEKaQBDzCbqGnyC/gqhcfc2N+QSRXdzmVc3mTJtQkAbJp5qAggAyVrFqk70sWuIk4SVWbRwz70HsYVbtXcdYtd7wiaBfq1i1v9Swai94nWLMc555z3Elc/3bCkXnwKKgQKvVGkiEKz9KejExYi7XJui8Q0ZD47t9zAcKAkBBACgIAAUBoCAAFASAggBQEAAKAvCBoMJ+7e89LrFt6e7mIYxCC569PfSmVXXKYuWgvaBiy/RXYtuekdT2cv95zUIYhRZkkjnFKQEZimJlob2ge2Mprepql9Dy+w1/JfOahTAKzaltx9+zNze4XkGsPDQXVEn4+32nSUlkVTJggHVe0xBGoQXfkAPctpCcVhArD80FnSJHuO06C2tZ9kZunNc0hFFoEVdTxv/XbXZwtYJYeWgu6C3Cz7TeTqRdoxUEuUMYBU/BOwLmK46VjOaCSoXpVfnkyltePCEIcocwCleGnnuUTK5TGCsDzQWdJPzFg5w20loLgtwhjMIV7OscXaQ0Vg6aC6qw8HdEPdldWmtBkDuEUWjJvtZJ1VRhrCy0/5ofOJrSuhts0hoLghpDGIXm1EW6lu6QHysP7QWVtF7y/sPhp6U1dgpyhzAKzXmbLNjGU60gVh4++KnxSv/2g6Se4DsFNYYwCs3IJU7OKoiVB/5YBUBBACgIAAUBoCAAFASAggBQEAAKAkBBACgIAAUBoCAAFASAggBQEAAKAkBBACgIAAUBoCAAFASAggBQEAAKAkBBAMYTdGR4lLX7XD73yPGP9N4XakBB7wTE7ix2dOldTWn8KL13hhpQ0JC+/J25n5JNVwhqULeIsEIMJ6jnQOEhtYTGEEJ+pttuC7llC6VlZH83y818gogTD3SIeEjl5GcZGE7QJEuKmEOuYkzs2YacwIUlyZaNnKDgqUXzLIto1bV37syLvN9v+2M4QZXjA0i3Kbv4ubvcW+xSBL96+dTOnKAxXGF+2MVj5C1Ki/yXC9Vwgig9//rMHiT6K0HQUXKkvLx8OzlTJuQ++IwcLQ/749Yf/bg3hhPk/CQubTdEELRLnEl2skxYc+k8p+njEVbSh5nCQ1OMJuiUuFLe5K6CoIOuFPvOI+hz8gG3rTrwQGvvuS41xmiCaiLG8V/ztb0eFASda8Pfb5ExiBM0jivYQ84X9LxE6Wmy3187ZDRBtMB6x+qX18eEnKB0yi3H6m1BWSXzLes4Qdakfamt7PTroGHFOwd30mTpbikYThD9eGxP6w0Pn+RKh6LDLjQ8fWtIr1z+Lfb6sA49lzVQuve2tp2G+i9ZrPEEeaaMKMr+ox4UBICCAK4WQXXfqrsvTjFXiyDdQEEAKAgABQGgIAAUBICCAFAQAAoCQEEAKAgABQGgIAAUBICCAFAQAAoCQEEAKAgABQGgIID/Ay0nJpQHSMw1AAAAAElFTkSuQmCC" /><!-- --></p>
+<p>To observe the initial paths, we now truncate the paths up to
+2,000.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">plot</span>(mincer_sgd_path<span class="sc">$</span>path_coefficients[<span class="dv">1</span><span class="sc">:</span><span class="dv">2000</span>], <span class="at">ylab=</span><span class="st">&quot;Return to Education&quot;</span>, <span class="at">xlab=</span><span class="st">&quot;Steps&quot;</span>, <span class="at">type=</span><span class="st">&quot;l&quot;</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="st">&quot;2000th step&quot;</span>, mincer_sgd_path<span class="sc">$</span>path_coefficients[<span class="dv">2000</span>]))</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2000th step&quot;       &quot;0.121832196962998&quot;</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="st">&quot;Final Estimate&quot;</span>, mincer_sgd_path<span class="sc">$</span>coefficients[<span class="dv">2</span>]))</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Final Estimate&quot;    &quot;0.126481851251926&quot;</span></span></code></pre></div>
+<p>It can be seen that the SGD path almost converged only after the
+2,000 steps, less than 10% of the sample size.</p>
+</div>
+<div id="estimating-the-quantile-regression-model-using-s-subgd" class="section level3">
+<h3>Estimating the Quantile Regression Model Using S-subGD</h3>
+<p>We now estimate a quantile regression version of the Mincer
+equation.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a> mincer_sgd <span class="ot">=</span> <span class="fu">sgdi_qr</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a> <span class="fu">print</span>(mincer_sgd)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt; Call: </span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; sgdi_qr(formula = y ~ edu + exp + exp2)</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; Coefficients: </span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt;             Coefficient    CI.Lower    CI.Upper</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; (Intercept)  0.38554518  0.34997815  0.42111221</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; edu          0.14179972  0.13871229  0.14488716</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; exp          0.03070496  0.02817208  0.03323784</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; exp2        -0.04446399 -0.04992280 -0.03900519</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt; Significance Level: 95 %</span></span></code></pre></div>
+<p>The default quantile level is 0.5, as seen below.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a> mincer_sgd <span class="ot">=</span> <span class="fu">sgdi_qr</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a> <span class="fu">print</span>(mincer_sgd)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; Call: </span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt; sgdi_qr(formula = y ~ edu + exp + exp2)</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; Coefficients: </span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt;             Coefficient    CI.Lower    CI.Upper</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; (Intercept)  0.38950568  0.35471614  0.42429523</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; edu          0.14093267  0.13888052  0.14298482</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; exp          0.03162466  0.02957803  0.03367129</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; exp2        -0.04682869 -0.05391537 -0.03974201</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt; Significance Level: 95 %</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a> mincer_sgd_median <span class="ot">=</span> <span class="fu">sgdi_qr</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2, <span class="at">qt=</span><span class="fl">0.5</span>)</span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a> <span class="fu">print</span>(mincer_sgd_median)</span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt; Call: </span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt; sgdi_qr(formula = y ~ edu + exp + exp2, qt = 0.5)</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; Coefficients: </span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="co">#&gt;             Coefficient    CI.Lower    CI.Upper</span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="co">#&gt; (Intercept)  0.39411891  0.35611944  0.43211839</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="co">#&gt; edu          0.14093688  0.13831053  0.14356323</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co">#&gt; exp          0.03093505  0.02835594  0.03351416</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co">#&gt; exp2        -0.04491385 -0.05045572 -0.03937199</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co">#&gt; Significance Level: 95 %</span></span></code></pre></div>
+<p>We now consider alternative quantile levels.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a> mincer_sgd_p10 <span class="ot">=</span> <span class="fu">sgdi_qr</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2, <span class="at">qt=</span><span class="fl">0.1</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a> <span class="fu">print</span>(mincer_sgd_p10)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; Call: </span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; sgdi_qr(formula = y ~ edu + exp + exp2, qt = 0.1)</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; Coefficients: </span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;             Coefficient    CI.Lower    CI.Upper</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; (Intercept) -0.25196933 -0.31035456 -0.19358410</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt; edu          0.13065520  0.12507978  0.13623062</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; exp          0.03324245  0.02421412  0.04227079</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt; exp2        -0.05336690 -0.07399920 -0.03273460</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt; Significance Level: 95 %</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a> mincer_sgd_p90 <span class="ot">=</span> <span class="fu">sgdi_qr</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2, <span class="at">qt=</span><span class="fl">0.9</span>)</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a> <span class="fu">print</span>(mincer_sgd_p90)</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt; Call: </span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt; sgdi_qr(formula = y ~ edu + exp + exp2, qt = 0.9)</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co">#&gt; Coefficients: </span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt;              Coefficient    CI.Lower    CI.Upper</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; (Intercept)  1.568552430  1.45559730 1.681507562</span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt; edu          0.114339739  0.10430657 0.124372907</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt; exp          0.015915492  0.01069968 0.021131310</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; exp2        -0.004314836 -0.01861263 0.009982955</span></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co">#&gt; Significance Level: 95 %</span></span></code></pre></div>
+<p>As before, we can plot the SGD path.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>mincer_sgd_path <span class="ot">=</span> <span class="fu">sgdi_qr</span>(y <span class="sc">~</span> edu <span class="sc">+</span> exp <span class="sc">+</span> exp2, <span class="at">path =</span> <span class="cn">TRUE</span>, <span class="at">path_index =</span> <span class="dv">2</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">plot</span>(mincer_sgd_path<span class="sc">$</span>path_coefficients[<span class="dv">1</span><span class="sc">:</span><span class="dv">2000</span>], <span class="at">ylab=</span><span class="st">&quot;Return to Education&quot;</span>, <span class="at">xlab=</span><span class="st">&quot;Steps&quot;</span>, <span class="at">type=</span><span class="st">&quot;l&quot;</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="st">&quot;2000th step&quot;</span>, mincer_sgd_path<span class="sc">$</span>path_coefficients[<span class="dv">2000</span>]))</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2000th step&quot;       &quot;0.144993066450144&quot;</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="st">&quot;Final Estimate&quot;</span>, mincer_sgd_path<span class="sc">$</span>coefficients[<span class="dv">2</span>]))</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Final Estimate&quot;   &quot;0.14159342186282&quot;</span></span></code></pre></div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
